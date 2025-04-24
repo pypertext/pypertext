@@ -7,19 +7,12 @@ from pypertext import ht, Element
 # Create a div element with a class and an id
 div = ht.div(id="my-div", classes=["container", "content"], style={"color": "red"})
 div + ht.h1("Hello World") + ht.p("This is a paragraph.")
-
-# Create a custom element
-class MyElement(Element):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_classes("my-div")
-        self.set_attrs(id="my-div", style={"color": "red"})
-
-div = MyElement("Hello World")
 ```
 
-Copyright (c) 2023-2025 Asif Rahman
-License: Apache License 2.0
+Changes
+-------
+0.1.3 - Added the setup_logging function to configure logging.
+0.1.2 - Replaced dict-based elements to class-based elements with the Element class.
 """
 
 import os
@@ -38,8 +31,7 @@ from numbers import Number as _Number
 
 log = logging.getLogger(__name__)
 
-__version__ = "0.1.2"
-__author__ = "Asif Rahman"
+__version__ = "0.1.3"
 __license__ = "Apache License 2.0"
 
 # fmt: off
@@ -207,7 +199,7 @@ class Element(metaclass=ABCMeta):
         Add children to this element with += operator. Returns the left element.
 
         Args:
-            other: The children to add to the element. Can be a string, number, list, tuple, dict, Element, 
+            other: The children to add to the element. Can be a string, number, list, tuple, dict, Element,
                 or any class that defines a get_element method.
 
         Example:
@@ -226,7 +218,7 @@ class Element(metaclass=ABCMeta):
         """
         Set attributes for the element. If there are duplicate keys, use the last value. `classes` key is merged into
         a single classes list.
-        
+
         Args:
             **kwargs: Attributes to set for the element.
         """
@@ -239,10 +231,10 @@ class Element(metaclass=ABCMeta):
     def merge_attrs(self, **kwargs) -> "Element":
         """
         Merge attributes with the existing attributes. If there are duplicate keys, combine them into a list.
-        
+
         Args:
             **kwargs: Attributes to merge with the existing attributes.
-        
+
         Example:
             Merge attributes with an element.
 
@@ -259,10 +251,10 @@ class Element(metaclass=ABCMeta):
     def has_classes(self, *classes: str) -> bool:
         """
         Check if the element has all of the given classes.
-        
+
         Args:
             *classes (str): The classes to check for.
-        
+
         Returns:
             bool: True if the element has all of the given classes, False otherwise.
         """
@@ -427,15 +419,15 @@ class Element(metaclass=ABCMeta):
     def pipe(self, function: t.Callable, *args, **kwargs):
         """
         A structured way to apply a sequence of user-defined functions.
-        
+
         Args:
             function (Callable): The function to apply to the element.
             *args: Positional arguments to pass to the function.
             **kwargs: Keyword arguments to pass to the function.
-        
+
         Returns:
             The result of the function.
-        
+
         Example:
             Apply a function to an element.
 
@@ -792,9 +784,7 @@ class Document(Element):
         try:
             from starlette.responses import HTMLResponse  # noqa: F401
         except ImportError:
-            raise ImportError(
-                "starlette is not installed. Please install it with `pip install starlette`."
-            )
+            raise ImportError("starlette is not installed. Please install it with `pip install starlette`.")
 
         assert scope["type"] == "http"
 
@@ -810,7 +800,7 @@ def config(key: str, cast: t.Callable = None, default: t.Any = None) -> t.Any:
         key (str): Environment variable name.
         cast (Callable): Type to cast the value to.
         default (Any): Default value if the environment variable is not found.
-    
+
     Example:
 
         Read an environment variable:
@@ -864,12 +854,12 @@ def find_dotenv(filename: str = ".env", raise_error_if_not_found: bool = False, 
     """
     Search in increasingly higher folders for the given file. Returns path to the file if found, or an empty
     string otherwise.
-    
+
     Args:
         filename (str): The name of the file to search for. Defaults to ".env".
         raise_error_if_not_found (bool): If True, raises an IOError if the file is not found. Defaults to False.
         usecwd (bool): If True, uses the current working directory as the starting point for the search. Defaults to False.
-    
+
     Returns:
         str: The path to the file if found, or an empty string if not found.
     """
@@ -917,7 +907,7 @@ def load_dotenv(dotenv_path: str = None, override: bool = True, encoding: str = 
             directory and all parent directories.
         override (bool): Whether to override existing environment variables.
         encoding (str): The encoding of the .env file. Defaults to 'utf-8'.
-    
+
     Example:
         Load environment variables from a .env file:
 
@@ -1004,3 +994,44 @@ def load_dotenv(dotenv_path: str = None, override: bool = True, encoding: str = 
             continue
         if v is not None:
             os.environ[k] = v
+
+
+def setup_logging(level: int = None, file: str = None, disable_stdout: bool = False):
+    """Setup logging.
+
+    Args:
+        level (int, optional): The logging level. Defaults to logging.INFO.
+        file (str, optional): The path to the log file. Defaults to None.
+        disable_stdout (bool, optional): Whether to disable stdout logging. Defaults to False.
+    
+    Example:
+
+        Setup logging to a file and disable stdout logging:
+
+        ```python
+        import logging
+        from pypertext import setup_logging
+
+        setup_logging(level=logging.DEBUG)
+        setup_logging(file="logs/app.log", disable_stdout=True)
+        setup_logging(level="DEBUG", file="logs/app.log", disable_stdout=True)
+        ```
+    """
+    if level is None:
+        level = logging.INFO
+    if isinstance(level, str):
+        level = getattr(logging, level.upper())
+    if file is None and disable_stdout:
+        return
+    handlers = []
+    if not disable_stdout:
+        handlers.append(logging.StreamHandler())
+    if file is not None:
+        os.makedirs(os.path.dirname(file), exist_ok=True)
+        handlers.append(logging.FileHandler(file))
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s|%(levelname)s|%(name)s|%(message)s",
+        handlers=handlers,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
