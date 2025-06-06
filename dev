@@ -96,6 +96,17 @@ cmd_setup() {
 }
 defhelp setup 'Set up Python virtual environment.'
 
+cmd_test() {
+    echo "Running tests..."
+    source .venv/bin/activate; pytest -v --cov=src --cov-report=html --cov-report=term-missing
+}
+
+cmd_cov() {
+    echo "Running tests with coverage..."
+    source .venv/bin/activate; python -m pytest tests/ --cov=pypertext --cov-report=html --cov-report=term
+}
+defhelp cov 'Run tests with coverage.'
+
 cmd_build() {
     echo "Building package..."
 	rm -rf ./dist
