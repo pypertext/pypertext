@@ -11,6 +11,7 @@ div + ht.h1("Hello World") + ht.p("This is a paragraph.")
 
 Changes
 -------
+Unreleased - Fixed a bug in Element.extend method where it did not return the element itself. _listify now returns a list of values when given a dict. Type hinting updates.
 0.1.5 - Element attributes starting with underscores are now ignored and treated as private attributes to hold state.
 0.1.4 - Improved rendering efficiency, dict2css can handle nested selectors and various types of CSS values. Added ElementChild type for better type hinting.
 0.1.3 - Added the setup_logging function to configure logging.
@@ -86,8 +87,14 @@ def _listify(obj: t.Any) -> t.List[t.Any]:
     """Convert an object to a list."""
     if obj is None:
         return []
-    if isinstance(obj, (list, tuple, dict, set)):
+    if isinstance(obj, list):
         return obj
+    if isinstance(obj, tuple):
+        return list(obj)
+    if isinstance(obj, dict):
+        return list(obj.values())
+    if isinstance(obj, set):
+        return list(obj)
     return [obj]
 
 
@@ -189,7 +196,7 @@ def _compile_attribute(key: str, value: t.Any) -> str:
         return f'{key}="{value}"'
 
 
-def _compile_attributes_fast(attrs: t.Mapping, element_id: int = None) -> str:
+def _compile_attributes_fast(attrs: t.Mapping, element_id: t.Optional[int] = None) -> str:
     """
     Fast attribute compilation with caching for immutable attributes.
 
@@ -250,7 +257,7 @@ def _compile_attributes_fast(attrs: t.Mapping, element_id: int = None) -> str:
     for k, v in attrs.items():
         if k == "classes":
             continue  # Already handled
-        
+
         # Skip private attributes (those starting with underscore)
         if k.startswith("_"):
             continue
@@ -262,7 +269,7 @@ def _compile_attributes_fast(attrs: t.Mapping, element_id: int = None) -> str:
         # Evaluate functions
         if _is_function(v):
             try:
-                v = v()
+                v = v()  # type: ignore
             except Exception:
                 log.error("Error evaluating function: %r" % v, exc_info=True)
                 continue
@@ -320,13 +327,18 @@ def _merge_dicts(*dicts: dict) -> dict:
 
 
 def _classes_ensure_list(classes: t.Union[str, t.Callable, t.List[str]]) -> t.List[str]:
-    """Users can pass a string or a list of strings to the classes attribute. This function ensures that the classes
-    attribute is always a list of strings."""
-    if _is_function(classes):
-        classes = classes()
-    if isinstance(classes, str):
-        return classes.split()
-    return classes
+    """
+    Users can pass a string, a list of strings, or a function that returns a string or list of strings. This function
+    ensures that the classes attribute is always a list of strings.
+    """
+    value = classes
+    if _is_function(value):
+        value = value()  # type: ignore
+    if isinstance(value, str):
+        return value.split()
+    if isinstance(value, list):
+        return value
+    return _listify(value)
 
 
 class Element:
@@ -359,7 +371,7 @@ class Element:
     def __add__(self, other: ElementChild) -> "Element":
         """Add children or attributes to the element using the + operator."""
         if isinstance(other, dict):
-            self.set_attrs(**other)
+            self.set_attrs(**other)  # type: ignore
             return self
         other = _listify(other)
         num_t = (_Number, datetime.date, datetime.datetime, datetime.timedelta)
@@ -396,7 +408,7 @@ class Element:
             # Iterable
             elif hasattr(obj, "__iter__"):
                 for subobj in obj:
-                    self + subobj
+                    self.__add__(subobj)
             # Function or method
             elif _is_function(obj):
                 # function is evaluated when rendered
@@ -565,7 +577,7 @@ class Element:
             ht.div("Hello")("World", style="color: red;")
             ```
         """
-        self + args
+        self.__add__(args)
         self.set_attrs(**kwargs)
         return self
 
@@ -587,7 +599,7 @@ class Element:
             ht.div().append("Hello world")
             ```
         """
-        self + args
+        self.__add__(args)
         return self
 
     def extend(self, *args: ElementChild) -> "Element":
@@ -609,7 +621,8 @@ class Element:
             ```
         """
         for arg in args:
-            self + arg
+            self.__add__(arg)
+        return self
 
     def insert(self, index: int, *args: ElementChild) -> "Element":
         """
@@ -732,7 +745,7 @@ class ht(metaclass=_MetaTagType):
         Return the HTML element as a string.
         """
         if _is_function(element):
-            element = element()
+            element = element()  # type: ignore
 
         # In the event that the returned value is a function, method, or coroutine
         # then recursively call ht.render_element until we get a string
@@ -742,8 +755,8 @@ class ht(metaclass=_MetaTagType):
         # `get_element` is a special method that can be implemented by classes and
         # should return an Element
         if hasattr(element, "get_element"):
-            if _is_function(element.get_element):
-                element = element.get_element()
+            if _is_function(element.get_element):  # type: ignore
+                element = element.get_element()  # type: ignore
 
         if element is None:
             return ""
@@ -781,11 +794,11 @@ class ht(metaclass=_MetaTagType):
                     innerHTML = ""
             elif hasattr(children, "get_element"):
                 # Any class instance with a get_element method
-                innerHTML = children.get_element()
+                innerHTML = children.get_element()  # type: ignore
             elif _is_function(children):
                 # evaluate function and render the result
                 try:
-                    result = children()
+                    result = children()  # type: ignore
                     innerHTML = str(result)
                 except Exception:
                     log.error("Error evaluating function: %r" % children, exc_info=True)
@@ -803,11 +816,11 @@ class ht(metaclass=_MetaTagType):
     def render_document(
         cls,
         body: Element,
-        head: t.List[Element] = None,
-        title: str = None,
-        body_kwargs: dict = None,
-        head_kwargs: dict = None,
-        html_kwargs: dict = None,
+        head: t.Optional[t.List[Element]] = None,
+        title: t.Optional[str] = None,
+        body_kwargs: t.Optional[dict] = None,
+        head_kwargs: t.Optional[dict] = None,
+        html_kwargs: t.Optional[dict] = None,
     ) -> str:
         """
         Render a full HTML document.
@@ -1044,14 +1057,14 @@ class Document(Element):
     def __init__(
         self,
         *args,
-        page_title: str = None,
-        headers: dict = None,
+        page_title: t.Optional[str] = None,
+        headers: t.Optional[t.Mapping[str, t.Any]] = None,
         status_code: int = 200,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.page_title: str = page_title
-        self.headers: dict = headers
+        self.page_title: t.Optional[str] = page_title
+        self.headers: t.Optional[t.Mapping[str, t.Any]] = headers
         """Response headers."""
         self.status_code: int = status_code
         """Response status code."""
@@ -1113,7 +1126,7 @@ class Document(Element):
             ```
         """
         try:
-            from starlette.responses import HTMLResponse  # noqa: F401
+            from starlette.responses import HTMLResponse  # type: ignore[import]
         except ImportError:
             raise ImportError("starlette is not installed. Please install it with `pip install starlette`.")
 
