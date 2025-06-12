@@ -368,7 +368,7 @@ class Element:
                 self.attributes["classes"] = _classes_ensure_list(classes)
             self.attributes.update(kwargs)
 
-    def __add__(self, other: ElementChild) -> "Element":
+    def __add__(self, other: ElementChild) -> t.Self:
         """Add children or attributes to the element using the + operator."""
         if isinstance(other, dict):
             self.set_attrs(**other)  # type: ignore
@@ -428,7 +428,7 @@ class Element:
                     )
         return self
 
-    def __iadd__(self, other: ElementChild) -> "Element":
+    def __iadd__(self, other: ElementChild) -> t.Self:
         """
         Add children to this element with += operator. Returns the left element.
 
@@ -449,7 +449,7 @@ class Element:
         self.__add__(other)
         return self
 
-    def set_attrs(self, **kwargs) -> "Element":
+    def set_attrs(self, **kwargs) -> t.Self:
         """
         Set attributes for the element. If there are duplicate keys, use the last value. `classes` key is merged into
         a single classes list.
@@ -463,7 +463,7 @@ class Element:
         self.attributes.update(kwargs)
         return self
 
-    def merge_attrs(self, **kwargs) -> "Element":
+    def merge_attrs(self, **kwargs) -> t.Self:
         """
         Merge attributes with the existing attributes. If there are duplicate keys, combine them into a list.
 
@@ -501,7 +501,7 @@ class Element:
         element_classes = [str(c) for c in element_classes]
         return all(str(c) in element_classes for c in classes)
 
-    def add_classes(self, *classes: str) -> "Element":
+    def add_classes(self, *classes: str) -> t.Self:
         """
         Add classes to the element.
 
@@ -525,7 +525,7 @@ class Element:
         self.attributes["classes"] = _flatten_and_dedupe(new_classes)
         return self
 
-    def remove_classes(self, *classes: str) -> "Element":
+    def remove_classes(self, *classes: str) -> t.Self:
         """
         Remove classes from the element.
 
@@ -558,7 +558,7 @@ class Element:
         self.attributes["classes"] = dedupe_classes
         return self
 
-    def __call__(self, *args: ElementChild, **kwargs) -> "Element":
+    def __call__(self, *args: ElementChild, **kwargs) -> t.Self:
         """
         Add children or attributes to the element.
 
@@ -581,7 +581,7 @@ class Element:
         self.set_attrs(**kwargs)
         return self
 
-    def append(self, *args: ElementChild) -> "Element":
+    def append(self, *args: ElementChild) -> t.Self:
         """
         Add children to the element.
 
@@ -602,7 +602,7 @@ class Element:
         self.__add__(args)
         return self
 
-    def extend(self, *args: ElementChild) -> "Element":
+    def extend(self, *args: ElementChild) -> t.Self:
         """
         Add children to the element.
 
@@ -624,7 +624,7 @@ class Element:
             self.__add__(arg)
         return self
 
-    def insert(self, index: int, *args: ElementChild) -> "Element":
+    def insert(self, index: int, *args: ElementChild) -> t.Self:
         """
         Insert children at the given index.
 
@@ -664,7 +664,7 @@ class Element:
         """
         return ht.render_element(self)
 
-    def pipe(self, function: t.Callable, *args, **kwargs) -> "Element":
+    def pipe(self, function: t.Callable, *args, **kwargs) -> t.Self:
         """
         A structured way to apply a sequence of user-defined functions.
 
