@@ -11,6 +11,7 @@ div + ht.h1("Hello World") + ht.p("This is a paragraph.")
 
 Changes
 -------
+0.1.5 - Element attributes starting with underscores are now ignored and treated as private attributes to hold state.
 0.1.4 - Improved rendering efficiency, dict2css can handle nested selectors and various types of CSS values. Added ElementChild type for better type hinting.
 0.1.3 - Added the setup_logging function to configure logging.
 0.1.2 - Replaced dict-based elements to class-based elements with the Element class.
@@ -212,6 +213,9 @@ def _compile_attributes_fast(attrs: t.Mapping, element_id: int = None) -> str:
         for k, v in attrs.items():
             if k == "classes":
                 continue  # Classes handled separately
+            # Skip private attributes
+            if k.startswith("_"):
+                continue
             if _is_function(v):
                 has_functions = True
                 break
@@ -246,6 +250,10 @@ def _compile_attributes_fast(attrs: t.Mapping, element_id: int = None) -> str:
     for k, v in attrs.items():
         if k == "classes":
             continue  # Already handled
+        
+        # Skip private attributes (those starting with underscore)
+        if k.startswith("_"):
+            continue
 
         # Handle style dict specially
         if k == "style" and isinstance(v, dict):

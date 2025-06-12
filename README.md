@@ -198,6 +198,10 @@ styled_div = ht.div(
     "Styled content",
     style={"background": "blue", "color": "white", "padding": "10px"}
 )
+
+# Private attributes starting with an underscore hold state and are not rendered
+el = ht.div("Private state", _metadata={"key": "value"})
+el.attributes["_metadata"]  # Access private attributes
 ```
 
 ### 🔄 Method Chaining and Pipes
@@ -397,6 +401,7 @@ doc += ht.div(
 
 ## Changes
 
+- **0.1.5** - Element attributes starting with underscores are now ignored and treated as private attributes to hold state.
 - **0.1.4** - Improved rendering efficiency, dict2css can handle nested selectors and various types of CSS values. Added ElementChild type for better type hinting.
 - **0.1.3** - Added the setup_logging function to configure logging.
 - **0.1.2** - Replaced dict-based elements to class-based elements with the Element class.
