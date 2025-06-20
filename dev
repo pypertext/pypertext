@@ -85,7 +85,7 @@ defhelp clean 'Clean up.'
 
 cmd_setup_venv() {
     echo "Setting up Python virtual environment..."
-    test -d .venv || uv venv --python=3.11 .venv
+    test -d .venv || uv venv --python=3.9 .venv
 }
 defhelp setup_venv 'Set up Python virtual environment.'
 
@@ -100,6 +100,7 @@ cmd_test() {
     echo "Running tests..."
     source .venv/bin/activate; pytest -v --cov=src --cov-report=html --cov-report=term-missing
 }
+defhelp test 'Run tests.'
 
 cmd_cov() {
     echo "Running tests with coverage..."

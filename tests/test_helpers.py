@@ -67,9 +67,9 @@ def test_listify_none():
 def test_listify_collections():
     """Test _listify with various collections."""
     assert _listify([1, 2, 3]) == [1, 2, 3]
-    assert _listify((1, 2, 3)) == (1, 2, 3)
-    assert _listify({1, 2, 3}) == {1, 2, 3}
-    assert _listify({"a": 1, "b": 2}) == {"a": 1, "b": 2}
+    assert _listify((1, 2, 3)) == [1, 2, 3]
+    assert _listify({1, 2, 3}) == [1, 2, 3]
+    assert _listify({"a": 1, "b": 2}) == [1, 2]
 
 
 def test_listify_single_value():

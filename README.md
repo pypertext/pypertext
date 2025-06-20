@@ -401,6 +401,7 @@ doc += ht.div(
 
 ## Changes
 
+- **0.1.6** - Fixed a bug in Element.extend method where it did not return the element itself. _listify now returns a list of values when given a dict. Type hinting updates. Changed minimum version requirements from Python 3.10 to 3.9. Added Bootstrap CSS module.
 - **0.1.5** - Element attributes starting with underscores are now ignored and treated as private attributes to hold state.
 - **0.1.4** - Improved rendering efficiency, dict2css can handle nested selectors and various types of CSS values. Added ElementChild type for better type hinting.
 - **0.1.3** - Added the setup_logging function to configure logging.

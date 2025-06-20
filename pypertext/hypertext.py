@@ -11,7 +11,8 @@ div + ht.h1("Hello World") + ht.p("This is a paragraph.")
 
 Changes
 -------
-Unreleased - Fixed a bug in Element.extend method where it did not return the element itself. _listify now returns a list of values when given a dict. Type hinting updates.
+0.1.6 - Fixed a bug in Element.extend method where it did not return the element itself. _listify now returns a 
+    list of values when given a dict. Type hinting updates. Changed minimum version requirements from Python 3.10 to 3.9.
 0.1.5 - Element attributes starting with underscores are now ignored and treated as private attributes to hold state.
 0.1.4 - Improved rendering efficiency, dict2css can handle nested selectors and various types of CSS values. Added ElementChild type for better type hinting.
 0.1.3 - Added the setup_logging function to configure logging.
@@ -24,6 +25,7 @@ import typing as t
 from io import StringIO
 from numbers import Number as _Number
 from inspect import isfunction, ismethod
+from typing_extensions import Self, is_typeddict
 from types import FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType
 
 log = logging.getLogger(__name__)
@@ -368,7 +370,7 @@ class Element:
                 self.attributes["classes"] = _classes_ensure_list(classes)
             self.attributes.update(kwargs)
 
-    def __add__(self, other: ElementChild) -> t.Self:
+    def __add__(self, other: ElementChild) -> Self:
         """Add children or attributes to the element using the + operator."""
         if isinstance(other, dict):
             self.set_attrs(**other)  # type: ignore
@@ -389,8 +391,8 @@ class Element:
             elif isinstance(obj, bytes):
                 self.children.append(obj.decode("utf-8"))
             # Dict and TypeDict are treated as attributes
-            # note: t.is_typeddict(obj) is available in Python 3.10+
-            elif isinstance(obj, dict) or t.is_typeddict(obj):
+            # note: is_typeddict(obj) is available in Python 3.10+
+            elif isinstance(obj, dict) or is_typeddict(obj):
                 self.set_attrs(**obj)
             # Pydantic model
             elif hasattr(obj, "model_dump"):
@@ -428,7 +430,7 @@ class Element:
                     )
         return self
 
-    def __iadd__(self, other: ElementChild) -> t.Self:
+    def __iadd__(self, other: ElementChild) -> Self:
         """
         Add children to this element with += operator. Returns the left element.
 
@@ -449,7 +451,7 @@ class Element:
         self.__add__(other)
         return self
 
-    def set_attrs(self, **kwargs) -> t.Self:
+    def set_attrs(self, **kwargs) -> Self:
         """
         Set attributes for the element. If there are duplicate keys, use the last value. `classes` key is merged into
         a single classes list.
@@ -463,7 +465,7 @@ class Element:
         self.attributes.update(kwargs)
         return self
 
-    def merge_attrs(self, **kwargs) -> t.Self:
+    def merge_attrs(self, **kwargs) -> Self:
         """
         Merge attributes with the existing attributes. If there are duplicate keys, combine them into a list.
 
@@ -501,7 +503,7 @@ class Element:
         element_classes = [str(c) for c in element_classes]
         return all(str(c) in element_classes for c in classes)
 
-    def add_classes(self, *classes: str) -> t.Self:
+    def add_classes(self, *classes: str) -> Self:
         """
         Add classes to the element.
 
@@ -525,7 +527,7 @@ class Element:
         self.attributes["classes"] = _flatten_and_dedupe(new_classes)
         return self
 
-    def remove_classes(self, *classes: str) -> t.Self:
+    def remove_classes(self, *classes: str) -> Self:
         """
         Remove classes from the element.
 
@@ -558,7 +560,7 @@ class Element:
         self.attributes["classes"] = dedupe_classes
         return self
 
-    def __call__(self, *args: ElementChild, **kwargs) -> t.Self:
+    def __call__(self, *args: ElementChild, **kwargs) -> Self:
         """
         Add children or attributes to the element.
 
@@ -581,7 +583,7 @@ class Element:
         self.set_attrs(**kwargs)
         return self
 
-    def append(self, *args: ElementChild) -> t.Self:
+    def append(self, *args: ElementChild) -> Self:
         """
         Add children to the element.
 
@@ -602,7 +604,7 @@ class Element:
         self.__add__(args)
         return self
 
-    def extend(self, *args: ElementChild) -> t.Self:
+    def extend(self, *args: ElementChild) -> Self:
         """
         Add children to the element.
 
@@ -624,7 +626,7 @@ class Element:
             self.__add__(arg)
         return self
 
-    def insert(self, index: int, *args: ElementChild) -> t.Self:
+    def insert(self, index: int, *args: ElementChild) -> Self:
         """
         Insert children at the given index.
 
@@ -664,7 +666,7 @@ class Element:
         """
         return ht.render_element(self)
 
-    def pipe(self, function: t.Callable, *args, **kwargs) -> t.Self:
+    def pipe(self, function: t.Callable, *args, **kwargs) -> Self:
         """
         A structured way to apply a sequence of user-defined functions.
 
